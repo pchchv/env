@@ -16,7 +16,11 @@ const (
 	exportPrefix      = "export"
 )
 
-var expandVarRegex = regexp.MustCompile(`(\\)?(\$)(\()?\{?([A-Z0-9_]+)?\}?`)
+var (
+	expandVarRegex     = regexp.MustCompile(`(\\)?(\$)(\()?\{?([A-Z0-9_]+)?\}?`)
+	escapeRegex        = regexp.MustCompile(`\\.`)
+	unescapeCharsRegex = regexp.MustCompile(`\\([^$])`)
+)
 
 func indexOfNonSpaceChar(src []byte) int {
 	return bytes.IndexFunc(src, func(r rune) bool {
@@ -100,6 +104,22 @@ func expandVariables(v string, m map[string]string) string {
 
 		return s
 	})
+}
+
+func expandEscapes(str string) string {
+	out := escapeRegex.ReplaceAllStringFunc(str, func(match string) string {
+		c := strings.TrimPrefix(match, `\`)
+		switch c {
+		case "n":
+			return "\n"
+		case "r":
+			return "\r"
+		default:
+			return match
+		}
+	})
+
+	return unescapeCharsRegex.ReplaceAllString(out, "$1")
 }
 
 // locateKeyName finds and parses the key name and returns the rest of the fragment.
