@@ -24,7 +24,7 @@ func indexOfNonSpaceChar(src []byte) int {
 	})
 }
 
-func isChar(char rune) func(rune) bool {
+func isCharFunc(char rune) func(rune) bool {
 	return func(v rune) bool {
 		return v == char
 	}
@@ -44,7 +44,7 @@ func getStatementStart(src []byte) []byte {
 	}
 
 	// skip comment section
-	pos = bytes.IndexFunc(src, isChar('\n'))
+	pos = bytes.IndexFunc(src, isCharFunc('\n'))
 	if pos == -1 {
 		return nil
 	}
