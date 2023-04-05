@@ -2,10 +2,16 @@ package env
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
+	"strings"
 	"unicode"
 )
 
-const charComment = '#'
+const (
+	charComment  = '#'
+	exportPrefix = "export"
+)
 
 func indexOfNonSpaceChar(src []byte) int {
 	return bytes.IndexFunc(src, func(r rune) bool {
@@ -56,4 +62,53 @@ func isLineEnd(r rune) bool {
 		return true
 	}
 	return false
+}
+
+// locateKeyName finds and parses the key name and returns the rest of the fragment.
+func locateKeyName(src []byte) (key string, cutset []byte, err error) {
+	// trim "export" and space at beginning
+	src = bytes.TrimLeftFunc(src, isSpace)
+	if bytes.HasPrefix(src, []byte(exportPrefix)) {
+		trimmed := bytes.TrimPrefix(src, []byte(exportPrefix))
+		if bytes.IndexFunc(trimmed, isSpace) == 0 {
+			src = bytes.TrimLeftFunc(trimmed, isSpace)
+		}
+	}
+
+	// locate key name end and validate it in single loop
+	offset := 0
+loop:
+	for i, char := range src {
+		rchar := rune(char)
+		if isSpace(rchar) {
+			continue
+		}
+
+		switch char {
+		case '=', ':':
+			// library also supports yaml-style value declaration
+			key = string(src[0:i])
+			offset = i + 1
+			break loop
+		case '_':
+		default:
+			// variable name should match [A-Za-z0-9_.]
+			if unicode.IsLetter(rchar) || unicode.IsNumber(rchar) || rchar == '.' {
+				continue
+			}
+
+			return "", nil, fmt.Errorf(
+				`unexpected character %q in variable name near %q`,
+				string(char), string(src))
+		}
+	}
+
+	if len(src) == 0 {
+		return "", nil, errors.New("zero length string")
+	}
+
+	// trim whitespace
+	key = strings.TrimRightFunc(key, unicode.IsSpace)
+	cutset = bytes.TrimLeftFunc(src[offset:], isSpace)
+	return key, cutset, nil
 }
