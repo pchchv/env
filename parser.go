@@ -241,3 +241,30 @@ func extractVarValue(src []byte, vars map[string]string) (value string, rest []b
 
 	return "", nil, fmt.Errorf("unterminated quoted value %s", src[:valEndIndex])
 }
+
+func parseBytes(src []byte, out map[string]string) error {
+	src = bytes.Replace(src, []byte("\r\n"), []byte("\n"), -1)
+	cutset := src
+	for {
+		cutset = getStatementStart(cutset)
+		if cutset == nil {
+			// end of file
+			break
+		}
+
+		key, left, err := locateKeyName(cutset)
+		if err != nil {
+			return err
+		}
+
+		value, left, err := extractVarValue(left, out)
+		if err != nil {
+			return err
+		}
+
+		out[key] = value
+		cutset = left
+	}
+
+	return nil
+}
