@@ -170,3 +170,74 @@ loop:
 	cutset = bytes.TrimLeftFunc(src[offset:], isSpace)
 	return key, cutset, nil
 }
+
+// extractVarValue extracts a variable value and returns the rest of the fragment.
+func extractVarValue(src []byte, vars map[string]string) (value string, rest []byte, err error) {
+	quote, hasPrefix := hasQuotePrefix(src)
+	if !hasPrefix {
+		// unquoted value - read to the end of the line
+		endOfLine := bytes.IndexFunc(src, isLineEnd)
+
+		// Hit EOF without a trailing newline
+		if endOfLine == -1 {
+			endOfLine = len(src)
+			if endOfLine == 0 {
+				return "", nil, nil
+			}
+		}
+
+		// Converting a line into a rune away to perform an accurate rune countdown
+		line := []rune(string(src[0:endOfLine]))
+
+		// Assume that the end of the string is the end of var
+		endOfVar := len(line)
+		if endOfVar == 0 {
+			return "", src[endOfLine:], nil
+		}
+
+		// Works backwards to check if the string ends with spaces, then a comment
+		for i := endOfVar - 1; i >= 0; i-- {
+			if line[i] == charComment && i > 0 {
+				if isSpace(line[i-1]) {
+					endOfVar = i
+					break
+				}
+			}
+		}
+
+		trimmed := strings.TrimFunc(string(line[0:endOfVar]), isSpace)
+
+		return expandVariables(trimmed, vars), src[endOfLine:], nil
+	}
+
+	// lookup quoted string terminator
+	for i := 1; i < len(src); i++ {
+		if char := src[i]; char != quote {
+			continue
+		}
+
+		// skip escaped quote symbol (\" or \', depends on quote)
+		if prevChar := src[i-1]; prevChar == '\\' {
+			continue
+		}
+
+		// trim quotes
+		trimFunc := isCharFunc(rune(quote))
+		value = string(bytes.TrimLeftFunc(bytes.TrimRightFunc(src[0:i], trimFunc), trimFunc))
+		if quote == prefixDoubleQuote {
+			// expand new strings for double quotes (this is a compatibility feature) and
+			// expand environment variables
+			value = expandVariables(expandEscapes(value), vars)
+		}
+
+		return value, src[i+1:], nil
+	}
+
+	// returns a formatted error if the quoted string is incomplete
+	valEndIndex := bytes.IndexFunc(src, isCharFunc('\n'))
+	if valEndIndex == -1 {
+		valEndIndex = len(src)
+	}
+
+	return "", nil, fmt.Errorf("unterminated quoted value %s", src[:valEndIndex])
+}
