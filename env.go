@@ -3,6 +3,8 @@ package env
 import (
 	"bytes"
 	"io"
+	"os"
+	"strings"
 )
 
 // Parse reads the env file from io.Reader,
@@ -33,4 +35,36 @@ func filenamesOrDefault(filenames []string) []string {
 	}
 
 	return filenames
+}
+
+func readFile(filename string) (envMap map[string]string, err error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	return Parse(file)
+}
+
+func loadFile(filename string, overload bool) error {
+	envMap, err := readFile(filename)
+	if err != nil {
+		return err
+	}
+
+	currentEnv := map[string]bool{}
+	rawEnv := os.Environ()
+	for _, rawEnvLine := range rawEnv {
+		key := strings.Split(rawEnvLine, "=")[0]
+		currentEnv[key] = true
+	}
+
+	for key, value := range envMap {
+		if !currentEnv[key] || overload {
+			_ = os.Setenv(key, value)
+		}
+	}
+
+	return nil
 }
