@@ -99,6 +99,27 @@ func TestLoadEqualsEnv(t *testing.T) {
 	loadEnvAndCompareValues(t, Load, envFileName, expectedValues, noopPresets)
 }
 
+func TestLoadQuotedEnv(t *testing.T) {
+	envFileName := "fixtures/quoted.env"
+	expectedValues := map[string]string{
+		"OPTION_A": "1",
+		"OPTION_B": "2",
+		"OPTION_C": "",
+		"OPTION_D": "\\n",
+		"OPTION_E": "1",
+		"OPTION_F": "2",
+		"OPTION_G": "",
+		"OPTION_H": "\n",
+		"OPTION_I": "echo 'asd'",
+		"OPTION_J": "line 1\nline 2",
+		"OPTION_K": "line one\nthis is \\'quoted\\'\none more line",
+		"OPTION_L": "line 1\nline 2",
+		"OPTION_M": "line one\nthis is \"quoted\"\none more line",
+	}
+
+	loadEnvAndCompareValues(t, Load, envFileName, expectedValues, noopPresets)
+}
+
 func TestOverloadWithNoArgsOverloadsDotEnv(t *testing.T) {
 	err := Overload()
 	pathError := err.(*os.PathError)
