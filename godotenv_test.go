@@ -3,6 +3,7 @@ package env
 import (
 	"bytes"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -184,4 +185,67 @@ func TestSubstitutions(t *testing.T) {
 	}
 
 	loadEnvAndCompareValues(t, Load, envFileName, expectedValues, noopPresets)
+}
+
+func TestExpanding(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected map[string]string
+	}{
+		{
+			"expands variables found in values",
+			"FOO=test\nBAR=$FOO",
+			map[string]string{"FOO": "test", "BAR": "test"},
+		},
+		{
+			"parses variables wrapped in brackets",
+			"FOO=test\nBAR=${FOO}bar",
+			map[string]string{"FOO": "test", "BAR": "testbar"},
+		},
+		{
+			"expands undefined variables to an empty string",
+			"BAR=$FOO",
+			map[string]string{"BAR": ""},
+		},
+		{
+			"expands variables in double quoted strings",
+			"FOO=test\nBAR=\"quote $FOO\"",
+			map[string]string{"FOO": "test", "BAR": "quote test"},
+		},
+		{
+			"does not expand variables in single quoted strings",
+			"BAR='quote $FOO'",
+			map[string]string{"BAR": "quote $FOO"},
+		},
+		{
+			"does not expand escaped variables",
+			`FOO="foo\$BAR"`,
+			map[string]string{"FOO": "foo$BAR"},
+		},
+		{
+			"does not expand escaped variables",
+			`FOO="foo\${BAR}"`,
+			map[string]string{"FOO": "foo${BAR}"},
+		},
+		{
+			"does not expand escaped variables",
+			"FOO=test\nBAR=\"foo\\${FOO} ${FOO}\"",
+			map[string]string{"FOO": "test", "BAR": "foo${FOO} test"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			env, err := Parse(strings.NewReader(tt.input))
+			if err != nil {
+				t.Errorf("Error: %s", err.Error())
+			}
+			for k, v := range tt.expected {
+				if strings.Compare(env[k], v) != 0 {
+					t.Errorf("Expected: %s, Actual: %s", v, env[k])
+				}
+			}
+		})
+	}
 }
