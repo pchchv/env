@@ -2,9 +2,12 @@ package env
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -105,6 +108,21 @@ func Exec(filenames []string, cmd string, cmdArgs []string, overload bool) error
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 	return command.Run()
+}
+
+// Marshal outputs the given environment as a dotenv format environment file.
+// Each line has the format: KEY="VALUE", where VALUE is backslash-escaped.
+func Marshal(envMap map[string]string) (string, error) {
+	lines := make([]string, 0, len(envMap))
+	for k, v := range envMap {
+		if d, err := strconv.Atoi(v); err == nil {
+			lines = append(lines, fmt.Sprintf(`%s=%d`, k, d))
+		} else {
+			lines = append(lines, fmt.Sprintf(`%s="%s"`, k, doubleQuoteEscape(v)))
+		}
+	}
+	sort.Strings(lines)
+	return strings.Join(lines, "\n"), nil
 }
 
 // Unmarshal reads the env file from the string,
