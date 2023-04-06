@@ -6,6 +6,33 @@ import (
 	"testing"
 )
 
+func loadEnvAndCompareValues(
+	t *testing.T,
+	loader func(files ...string) error,
+	envFileName string,
+	expectedValues map[string]string,
+	presets map[string]string) {
+	// first up, clear the env
+	os.Clearenv()
+
+	for k, v := range presets {
+		os.Setenv(k, v)
+	}
+
+	err := loader(envFileName)
+	if err != nil {
+		t.Fatalf("Error loading %v", envFileName)
+	}
+
+	for k := range expectedValues {
+		envValue := os.Getenv(k)
+		v := expectedValues[k]
+		if envValue != v {
+			t.Errorf("Mismatch for key '%v': expected '%#v' got '%#v'", k, v, envValue)
+		}
+	}
+}
+
 func TestLoadWithNoArgsLoadsDotEnv(t *testing.T) {
 	err := Load()
 	pathError := err.(*os.PathError)
