@@ -20,15 +20,6 @@ func Parse(r io.Reader) (map[string]string, error) {
 	return UnmarshalBytes(buf.Bytes())
 }
 
-// UnmarshalBytes parses env file from byte slices of characters,
-// returning a map of keys and values.
-func UnmarshalBytes(src []byte) (map[string]string, error) {
-	out := make(map[string]string)
-	err := parseBytes(src, out)
-
-	return out, err
-}
-
 // Load reads the env file(s) and loads them into ENV for this process.
 // Call this function as close as possible to the beginning of your program (ideally in main).
 // If you call Load without any args, it will load the .env at the current path by default.
@@ -91,6 +82,21 @@ func Read(filenames ...string) (envMap map[string]string, err error) {
 	}
 
 	return
+}
+
+// Unmarshal reads the env file from the string,
+// returning a map of keys and values.
+func Unmarshal(str string) (envMap map[string]string, err error) {
+	return UnmarshalBytes([]byte(str))
+}
+
+// UnmarshalBytes parses env file from byte slices of characters,
+// returning a map of keys and values.
+func UnmarshalBytes(src []byte) (map[string]string, error) {
+	out := make(map[string]string)
+	err := parseBytes(src, out)
+
+	return out, err
 }
 
 func filenamesOrDefault(filenames []string) []string {
