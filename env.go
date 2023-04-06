@@ -140,6 +140,27 @@ func UnmarshalBytes(src []byte) (map[string]string, error) {
 	return out, err
 }
 
+// Write serializes the given environment and writes it to a file.
+func Write(envMap map[string]string, filename string) error {
+	content, err := Marshal(envMap)
+	if err != nil {
+		return err
+	}
+
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.WriteString(content + "\n")
+	if err != nil {
+		return err
+	}
+
+	return file.Sync()
+}
+
 func filenamesOrDefault(filenames []string) []string {
 	if len(filenames) == 0 {
 		return []string{".env"}
