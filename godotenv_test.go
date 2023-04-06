@@ -112,6 +112,21 @@ func TestOverloadFileNotFound(t *testing.T) {
 	}
 }
 
+func TestOverloadDoesOverride(t *testing.T) {
+	envFileName := "fixtures/plain.env"
+
+	// ensure NO overload
+	presets := map[string]string{
+		"OPTION_A": "do_not_override",
+	}
+
+	expectedValues := map[string]string{
+		"OPTION_A": "1",
+	}
+
+	loadEnvAndCompareValues(t, Overload, envFileName, expectedValues, presets)
+}
+
 func TestReadPlainEnv(t *testing.T) {
 	envFileName := "fixtures/plain.env"
 	expectedValues := map[string]string{
