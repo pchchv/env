@@ -33,18 +33,41 @@ func UnmarshalBytes(src []byte) (map[string]string, error) {
 // Call this function as close as possible to the beginning of your program (ideally in main).
 // If you call Load without any args, it will load the .env at the current path by default.
 // Otherwise you can tell it which files to load (there can be more than one), for example:
-// env.Load("fileone", "filetwo")
+//
+//	env.Load("fileone", "filetwo")
+//
 // It is important to note that it DOES NOT DELETE env variables that already exist -
 // use the .env file to set dev vars or reasonable defaults.
 func Load(filenames ...string) (err error) {
 	filenames = filenamesOrDefault(filenames)
-
 	for _, filename := range filenames {
 		err = loadFile(filename, false)
 		if err != nil {
-			return // return early on a spazout
+			return
 		}
 	}
+
+	return
+}
+
+// Overload reads your env file(s) and loads them into ENV for this process.
+// Call this function as close as possible to the beginning of program (ideally in main).
+// If you call Overload without any args, it will load the .env at the current path by default.
+// Otherwise you can tell it which files to load (there can be several), for example:
+//
+//	godotenv.Overload("fileone", "filetwo")
+//
+// It is important to note that this OVERRIDE an env variable that already exists -
+// think of the .env file as forcibly setting all variables.
+func Overload(filenames ...string) (err error) {
+	filenames = filenamesOrDefault(filenames)
+	for _, filename := range filenames {
+		err = loadFile(filename, true)
+		if err != nil {
+			return
+		}
+	}
+
 	return
 }
 
