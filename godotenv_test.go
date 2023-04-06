@@ -79,6 +79,25 @@ func TestLoadPlainEnv(t *testing.T) {
 	loadEnvAndCompareValues(t, Load, envFileName, expectedValues, noopPresets)
 }
 
+func TestLoadExportedEnv(t *testing.T) {
+	envFileName := "fixtures/exported.env"
+	expectedValues := map[string]string{
+		"OPTION_A": "2",
+		"OPTION_B": "\\n",
+	}
+
+	loadEnvAndCompareValues(t, Load, envFileName, expectedValues, noopPresets)
+}
+
+func TestLoadEqualsEnv(t *testing.T) {
+	envFileName := "fixtures/equals.env"
+	expectedValues := map[string]string{
+		"OPTION_A": "postgres://localhost:5432/database?sslmode=disable",
+	}
+
+	loadEnvAndCompareValues(t, Load, envFileName, expectedValues, noopPresets)
+}
+
 func TestOverloadWithNoArgsOverloadsDotEnv(t *testing.T) {
 	err := Overload()
 	pathError := err.(*os.PathError)
