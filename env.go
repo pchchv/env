@@ -29,6 +29,25 @@ func UnmarshalBytes(src []byte) (map[string]string, error) {
 	return out, err
 }
 
+// Load reads the env file(s) and loads them into ENV for this process.
+// Call this function as close as possible to the beginning of your program (ideally in main).
+// If you call Load without any args, it will load the .env at the current path by default.
+// Otherwise you can tell it which files to load (there can be more than one), for example:
+// env.Load("fileone", "filetwo")
+// It is important to note that it DOES NOT DELETE env variables that already exist -
+// use the .env file to set dev vars or reasonable defaults.
+func Load(filenames ...string) (err error) {
+	filenames = filenamesOrDefault(filenames)
+
+	for _, filename := range filenames {
+		err = loadFile(filename, false)
+		if err != nil {
+			return // return early on a spazout
+		}
+	}
+	return
+}
+
 func filenamesOrDefault(filenames []string) []string {
 	if len(filenames) == 0 {
 		return []string{".env"}
