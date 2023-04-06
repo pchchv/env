@@ -71,6 +71,28 @@ func Overload(filenames ...string) (err error) {
 	return
 }
 
+// Read reads all envs (with the same load semantics as Load),
+// but returns the values as a map instead of automatically writing them to the env.
+func Read(filenames ...string) (envMap map[string]string, err error) {
+	filenames = filenamesOrDefault(filenames)
+	envMap = make(map[string]string)
+
+	for _, filename := range filenames {
+		individualEnvMap, individualErr := readFile(filename)
+
+		if individualErr != nil {
+			err = individualErr
+			return
+		}
+
+		for key, value := range individualEnvMap {
+			envMap[key] = value
+		}
+	}
+
+	return
+}
+
 func filenamesOrDefault(filenames []string) []string {
 	if len(filenames) == 0 {
 		return []string{".env"}
