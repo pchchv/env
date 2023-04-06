@@ -270,3 +270,31 @@ func TestExpanding(t *testing.T) {
 		})
 	}
 }
+
+func TestVariableStringValueSeparator(t *testing.T) {
+	input := "TEST_URLS=\"stratum+tcp://stratum.antpool.com:3333\nstratum+tcp://stratum.antpool.com:443\""
+	want := map[string]string{
+		"TEST_URLS": "stratum+tcp://stratum.antpool.com:3333\nstratum+tcp://stratum.antpool.com:443",
+	}
+	got, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(got) != len(want) {
+		t.Fatalf(
+			"unexpected value:\nwant:\n\t%#v\n\ngot:\n\t%#v", want, got)
+	}
+
+	for k, wantVal := range want {
+		gotVal, ok := got[k]
+		if !ok {
+			t.Fatalf("key %q doesn't present in result", k)
+		}
+		if wantVal != gotVal {
+			t.Fatalf(
+				"mismatch in %q value:\nwant:\n\t%s\n\ngot:\n\t%s", k,
+				wantVal, gotVal)
+		}
+	}
+}
