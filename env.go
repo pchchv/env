@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -82,6 +83,26 @@ func Read(filenames ...string) (envMap map[string]string, err error) {
 	}
 
 	return
+}
+
+// Exec loads the env vars from the specified filenames, then executes the specified command.
+// Simply connect os.stdin/err/out to the command and call Run().
+// If you need finer command control,
+// recommend using `Load()`, `Overload()` or `Read()` and the `os/exec` package.
+func Exec(filenames []string, cmd string, cmdArgs []string, overload bool) error {
+	op := Load
+	if overload {
+		op = Overload
+	}
+	if err := op(filenames...); err != nil {
+		return err
+	}
+
+	command := exec.Command(cmd, cmdArgs...)
+	command.Stdin = os.Stdin
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
+	return command.Run()
 }
 
 // Unmarshal reads the env file from the string,
