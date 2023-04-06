@@ -32,3 +32,32 @@ func TestOverloadFileNotFound(t *testing.T) {
 		t.Error("File wasn't found but Overload didn't return an error")
 	}
 }
+
+func TestReadPlainEnv(t *testing.T) {
+	envFileName := "fixtures/plain.env"
+	expectedValues := map[string]string{
+		"OPTION_A": "1",
+		"OPTION_B": "2",
+		"OPTION_C": "3",
+		"OPTION_D": "4",
+		"OPTION_E": "5",
+		"OPTION_F": "",
+		"OPTION_G": "",
+		"OPTION_H": "1 2",
+	}
+
+	envMap, err := Read(envFileName)
+	if err != nil {
+		t.Error("Error reading file")
+	}
+
+	if len(envMap) != len(expectedValues) {
+		t.Error("Didn't get the right size map back")
+	}
+
+	for key, value := range expectedValues {
+		if envMap[key] != value {
+			t.Error("Read got one of the keys wrong")
+		}
+	}
+}
