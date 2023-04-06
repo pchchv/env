@@ -6,6 +6,8 @@ import (
 	"testing"
 )
 
+var noopPresets = make(map[string]string)
+
 func loadEnvAndCompareValues(
 	t *testing.T,
 	loader func(files ...string) error,
@@ -45,6 +47,36 @@ func TestLoadFileNotFound(t *testing.T) {
 	if err := Load("somefilethatwillneverexistever.env"); err == nil {
 		t.Error("File wasn't found but Load didn't return an error")
 	}
+}
+
+func TestLoadDoesNotOverride(t *testing.T) {
+	envFileName := "fixtures/plain.env"
+
+	// ensure NO overload
+	presets := map[string]string{
+		"OPTION_A": "do_not_override",
+		"OPTION_B": "",
+	}
+
+	expectedValues := map[string]string{
+		"OPTION_A": "do_not_override",
+		"OPTION_B": "",
+	}
+	loadEnvAndCompareValues(t, Load, envFileName, expectedValues, presets)
+}
+
+func TestLoadPlainEnv(t *testing.T) {
+	envFileName := "fixtures/plain.env"
+	expectedValues := map[string]string{
+		"OPTION_A": "1",
+		"OPTION_B": "2",
+		"OPTION_C": "3",
+		"OPTION_D": "4",
+		"OPTION_E": "5",
+		"OPTION_H": "1 2",
+	}
+
+	loadEnvAndCompareValues(t, Load, envFileName, expectedValues, noopPresets)
 }
 
 func TestOverloadWithNoArgsOverloadsDotEnv(t *testing.T) {
