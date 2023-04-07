@@ -408,3 +408,99 @@ func TestLinesToIgnore(t *testing.T) {
 		})
 	}
 }
+
+func TestParsing(t *testing.T) {
+	// unquoted values
+	parseAndCompare(t, "FOO=bar", "FOO", "bar")
+
+	// parses values with spaces around equal sign
+	parseAndCompare(t, "FOO =bar", "FOO", "bar")
+	parseAndCompare(t, "FOO= bar", "FOO", "bar")
+
+	// parses double quoted values
+	parseAndCompare(t, `FOO="bar"`, "FOO", "bar")
+
+	// parses single quoted values
+	parseAndCompare(t, "FOO='bar'", "FOO", "bar")
+
+	// parses escaped double quotes
+	parseAndCompare(t, `FOO="escaped\"bar"`, "FOO", `escaped"bar`)
+
+	// parses single quotes inside double quotes
+	parseAndCompare(t, `FOO="'d'"`, "FOO", `'d'`)
+
+	// parses yaml style options
+	parseAndCompare(t, "OPTION_A: 1", "OPTION_A", "1")
+
+	//parses yaml values with equal signs
+	parseAndCompare(t, "OPTION_A: Foo=bar", "OPTION_A", "Foo=bar")
+
+	// parses non-yaml options with colons
+	parseAndCompare(t, "OPTION_A=1:B", "OPTION_A", "1:B")
+
+	// parses export keyword
+	parseAndCompare(t, "export OPTION_A=2", "OPTION_A", "2")
+	parseAndCompare(t, `export OPTION_B='\n'`, "OPTION_B", "\\n")
+	parseAndCompare(t, "export exportFoo=2", "exportFoo", "2")
+	parseAndCompare(t, "exportFOO=2", "exportFOO", "2")
+	parseAndCompare(t, "export_FOO =2", "export_FOO", "2")
+	parseAndCompare(t, "export.FOO= 2", "export.FOO", "2")
+	parseAndCompare(t, "export\tOPTION_A=2", "OPTION_A", "2")
+	parseAndCompare(t, "  export OPTION_A=2", "OPTION_A", "2")
+	parseAndCompare(t, "\texport OPTION_A=2", "OPTION_A", "2")
+
+	// 'expands newlines in quoted strings' do
+	// expect(env('FOO="bar\nbaz"')).to eql('FOO' => "bar\nbaz")
+	parseAndCompare(t, `FOO="bar\nbaz"`, "FOO", "bar\nbaz")
+
+	// 'parses variables with "." in the name' do
+	// expect(env('FOO.BAR=foobar')).to eql('FOO.BAR' => 'foobar')
+	parseAndCompare(t, "FOO.BAR=foobar", "FOO.BAR", "foobar")
+
+	// 'parses variables with several "=" in the value' do
+	// expect(env('FOO=foobar=')).to eql('FOO' => 'foobar=')
+	parseAndCompare(t, "FOO=foobar=", "FOO", "foobar=")
+
+	// 'strips unquoted values' do
+	// expect(env('foo=bar ')).to eql('foo' => 'bar') # not 'bar '
+	parseAndCompare(t, "FOO=bar ", "FOO", "bar")
+
+	// unquoted internal whitespace is preserved
+	parseAndCompare(t, `KEY=value value`, "KEY", "value value")
+
+	// 'ignores inline comments' do
+	// expect(env("foo=bar # this is foo")).to eql('foo' => 'bar')
+	parseAndCompare(t, "FOO=bar # this is foo", "FOO", "bar")
+
+	// 'allows # in quoted value' do
+	// expect(env('foo="bar#baz" # comment')).to eql('foo' => 'bar#baz')
+	parseAndCompare(t, `FOO="bar#baz" # comment`, "FOO", "bar#baz")
+	parseAndCompare(t, "FOO='bar#baz' # comment", "FOO", "bar#baz")
+	parseAndCompare(t, `FOO="bar#baz#bang" # comment`, "FOO", "bar#baz#bang")
+
+	// 'parses # in quoted values' do
+	// expect(env('foo="ba#r"')).to eql('foo' => 'ba#r')
+	// expect(env("foo='ba#r'")).to eql('foo' => 'ba#r')
+	parseAndCompare(t, `FOO="ba#r"`, "FOO", "ba#r")
+	parseAndCompare(t, "FOO='ba#r'", "FOO", "ba#r")
+
+	//newlines and backslashes should be escaped
+	parseAndCompare(t, `FOO="bar\n\ b\az"`, "FOO", "bar\n baz")
+	parseAndCompare(t, `FOO="bar\\\n\ b\az"`, "FOO", "bar\\\n baz")
+	parseAndCompare(t, `FOO="bar\\r\ b\az"`, "FOO", "bar\\r baz")
+
+	parseAndCompare(t, `="value"`, "", "value")
+
+	// unquoted whitespace around keys should be ignored
+	parseAndCompare(t, " KEY =value", "KEY", "value")
+	parseAndCompare(t, "   KEY=value", "KEY", "value")
+	parseAndCompare(t, "\tKEY=value", "KEY", "value")
+
+	// 'throws an error if line format is incorrect' do
+	// expect{env('lol$wut')}.to raise_error(Dotenv::FormatError)
+	badlyFormattedLine := "lol$wut"
+	_, err := Unmarshal(badlyFormattedLine)
+	if err == nil {
+		t.Errorf("Expected \"%v\" to return error, but it didn't", badlyFormattedLine)
+	}
+}
