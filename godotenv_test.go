@@ -2,7 +2,9 @@ package env
 
 import (
 	"bytes"
+	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -523,5 +525,56 @@ func TestActualEnvVarsAreLeftAlone(t *testing.T) {
 
 	if os.Getenv("OPTION_A") != "actualenv" {
 		t.Error("An ENV var set earlier was overwritten")
+	}
+}
+
+func TestWrite(t *testing.T) {
+	writeAndCompare := func(env string, expected string) {
+		envMap, _ := Unmarshal(env)
+		actual, _ := Marshal(envMap)
+		if expected != actual {
+			t.Errorf("Expected '%v' (%v) to write as '%v', got '%v' instead.", env, envMap, expected, actual)
+		}
+	}
+	//test some single lines to show the general idea
+	//TestRoundtrip makes most of the good assertions
+	//values are always double-quoted
+	writeAndCompare(`key=value`, `key="value"`)
+	//double-quotes are escaped
+	writeAndCompare(`key=va"lu"e`, `key="va\"lu\"e"`)
+	//but single quotes are left alone
+	writeAndCompare(`key=va'lu'e`, `key="va'lu'e"`)
+	// newlines, backslashes, and some other special chars are escaped
+	writeAndCompare(`foo="\n\r\\r!"`, `foo="\n\r\\r\!"`)
+	// lines should be sorted
+	writeAndCompare("foo=bar\nbaz=buzz", "baz=\"buzz\"\nfoo=\"bar\"")
+	// integers should not be quoted
+	writeAndCompare(`key="10"`, `key=10`)
+
+}
+
+func TestRoundtrip(t *testing.T) {
+	fixtures := []string{"equals.env", "exported.env", "plain.env", "quoted.env"}
+	for _, fixture := range fixtures {
+		fixtureFilename := fmt.Sprintf("fixtures/%s", fixture)
+		env, err := readFile(fixtureFilename)
+		if err != nil {
+			t.Errorf("Expected '%s' to read without error (%v)", fixtureFilename, err)
+		}
+
+		rep, err := Marshal(env)
+		if err != nil {
+			t.Errorf("Expected '%s' to Marshal (%v)", fixtureFilename, err)
+		}
+
+		roundtripped, err := Unmarshal(rep)
+		if err != nil {
+			t.Errorf("Expected '%s' to Mashal and Unmarshal (%v)", fixtureFilename, err)
+		}
+
+		if !reflect.DeepEqual(env, roundtripped) {
+			t.Errorf("Expected '%s' to roundtrip as '%v', got '%v' instead", fixtureFilename, env, roundtripped)
+		}
+
 	}
 }
