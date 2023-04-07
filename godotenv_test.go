@@ -344,3 +344,19 @@ func TestTrailingNewlines(t *testing.T) {
 		})
 	}
 }
+
+func TestErrorReadDirectory(t *testing.T) {
+	envFileName := "fixtures/"
+	envMap, err := Read(envFileName)
+	if err == nil {
+		t.Errorf("Expected error, got %v", envMap)
+	}
+}
+
+func TestErrorParsing(t *testing.T) {
+	envFileName := "fixtures/invalid1.env"
+	envMap, err := Read(envFileName)
+	if err == nil {
+		t.Errorf("Expected error, got %v", envMap)
+	}
+}
