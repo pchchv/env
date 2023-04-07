@@ -504,3 +504,14 @@ func TestParsing(t *testing.T) {
 		t.Errorf("Expected \"%v\" to return error, but it didn't", badlyFormattedLine)
 	}
 }
+
+func TestComments(t *testing.T) {
+	envFileName := "fixtures/comments.env"
+	expectedValues := map[string]string{
+		"foo": "bar",
+		"bar": "foo#baz",
+		"baz": "foo",
+	}
+
+	loadEnvAndCompareValues(t, Load, envFileName, expectedValues, noopPresets)
+}
