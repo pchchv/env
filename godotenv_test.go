@@ -360,3 +360,39 @@ func TestErrorParsing(t *testing.T) {
 		t.Errorf("Expected error, got %v", envMap)
 	}
 }
+
+func TestLinesToIgnore(t *testing.T) {
+	cases := map[string]struct {
+		input string
+		want  string
+	}{
+		"Line with nothing but line break": {
+			input: "\n",
+		},
+		"Line with nothing but windows-style line break": {
+			input: "\r\n",
+		},
+		"Line full of whitespace": {
+			input: "\t\t ",
+		},
+		"Comment": {
+			input: "# Comment",
+		},
+		"Indented comment": {
+			input: "\t # comment",
+		},
+		"non-ignored value": {
+			input: `export OPTION_B='\n'`,
+			want:  `export OPTION_B='\n'`,
+		},
+	}
+
+	for n, c := range cases {
+		t.Run(n, func(t *testing.T) {
+			got := string(getStatementStart([]byte(c.input)))
+			if got != c.want {
+				t.Errorf("Expected:\t %q\nGot:\t %q", c.want, got)
+			}
+		})
+	}
+}
