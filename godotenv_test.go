@@ -36,6 +36,18 @@ func loadEnvAndCompareValues(
 	}
 }
 
+func parseAndCompare(t *testing.T, rawEnvLine string, expectedKey string, expectedValue string) {
+	result, err := Unmarshal(rawEnvLine)
+	if err != nil {
+		t.Errorf("Expected %q to parse as %q: %q, errored %q", rawEnvLine, expectedKey, expectedValue, err)
+		return
+	}
+
+	if result[expectedKey] != expectedValue {
+		t.Errorf("Expected '%v' to parse as '%v' => '%v', got %q instead", rawEnvLine, expectedKey, expectedValue, result)
+	}
+}
+
 func TestLoadWithNoArgsLoadsDotEnv(t *testing.T) {
 	err := Load()
 	pathError := err.(*os.PathError)
