@@ -65,7 +65,7 @@ func TestLoadFileNotFound(t *testing.T) {
 }
 
 func TestLoadDoesNotOverride(t *testing.T) {
-	envFileName := "fixtures/plain.env"
+	envFileName := "tests/plain.env"
 
 	// ensure NO overload
 	presets := map[string]string{
@@ -81,7 +81,7 @@ func TestLoadDoesNotOverride(t *testing.T) {
 }
 
 func TestLoadPlainEnv(t *testing.T) {
-	envFileName := "fixtures/plain.env"
+	envFileName := "tests/plain.env"
 	expectedValues := map[string]string{
 		"OPTION_A": "1",
 		"OPTION_B": "2",
@@ -95,7 +95,7 @@ func TestLoadPlainEnv(t *testing.T) {
 }
 
 func TestLoadExportedEnv(t *testing.T) {
-	envFileName := "fixtures/exported.env"
+	envFileName := "tests/exported.env"
 	expectedValues := map[string]string{
 		"OPTION_A": "2",
 		"OPTION_B": "\\n",
@@ -105,7 +105,7 @@ func TestLoadExportedEnv(t *testing.T) {
 }
 
 func TestLoadEqualsEnv(t *testing.T) {
-	envFileName := "fixtures/equals.env"
+	envFileName := "tests/equals.env"
 	expectedValues := map[string]string{
 		"OPTION_A": "postgres://localhost:5432/database?sslmode=disable",
 	}
@@ -114,7 +114,7 @@ func TestLoadEqualsEnv(t *testing.T) {
 }
 
 func TestLoadQuotedEnv(t *testing.T) {
-	envFileName := "fixtures/quoted.env"
+	envFileName := "tests/quoted.env"
 	expectedValues := map[string]string{
 		"OPTION_A": "1",
 		"OPTION_B": "2",
@@ -149,7 +149,7 @@ func TestOverloadFileNotFound(t *testing.T) {
 }
 
 func TestOverloadDoesOverride(t *testing.T) {
-	envFileName := "fixtures/plain.env"
+	envFileName := "tests/plain.env"
 
 	// ensure NO overload
 	presets := map[string]string{
@@ -164,7 +164,7 @@ func TestOverloadDoesOverride(t *testing.T) {
 }
 
 func TestReadPlainEnv(t *testing.T) {
-	envFileName := "fixtures/plain.env"
+	envFileName := "tests/plain.env"
 	expectedValues := map[string]string{
 		"OPTION_A": "1",
 		"OPTION_B": "2",
@@ -210,7 +210,7 @@ func TestParse(t *testing.T) {
 }
 
 func TestSubstitutions(t *testing.T) {
-	envFileName := "fixtures/substitutions.env"
+	envFileName := "tests/substitutions.env"
 	expectedValues := map[string]string{
 		"OPTION_A": "1",
 		"OPTION_B": "1",
@@ -360,7 +360,7 @@ func TestTrailingNewlines(t *testing.T) {
 }
 
 func TestErrorReadDirectory(t *testing.T) {
-	envFileName := "fixtures/"
+	envFileName := "tests/"
 	envMap, err := Read(envFileName)
 	if err == nil {
 		t.Errorf("Expected error, got %v", envMap)
@@ -368,7 +368,7 @@ func TestErrorReadDirectory(t *testing.T) {
 }
 
 func TestErrorParsing(t *testing.T) {
-	envFileName := "fixtures/invalid1.env"
+	envFileName := "tests/invalid1.env"
 	envMap, err := Read(envFileName)
 	if err == nil {
 		t.Errorf("Expected error, got %v", envMap)
@@ -508,7 +508,7 @@ func TestParsing(t *testing.T) {
 }
 
 func TestComments(t *testing.T) {
-	envFileName := "fixtures/comments.env"
+	envFileName := "tests/comments.env"
 	expectedValues := map[string]string{
 		"foo": "bar",
 		"bar": "foo#baz",
@@ -521,7 +521,7 @@ func TestComments(t *testing.T) {
 func TestActualEnvVarsAreLeftAlone(t *testing.T) {
 	os.Clearenv()
 	os.Setenv("OPTION_A", "actualenv")
-	_ = Load("fixtures/plain.env")
+	_ = Load("tests/plain.env")
 
 	if os.Getenv("OPTION_A") != "actualenv" {
 		t.Error("An ENV var set earlier was overwritten")
@@ -554,9 +554,9 @@ func TestWrite(t *testing.T) {
 }
 
 func TestRoundtrip(t *testing.T) {
-	fixtures := []string{"equals.env", "exported.env", "plain.env", "quoted.env"}
-	for _, fixture := range fixtures {
-		fixtureFilename := fmt.Sprintf("fixtures/%s", fixture)
+	tests := []string{"equals.env", "exported.env", "plain.env", "quoted.env"}
+	for _, fixture := range tests {
+		fixtureFilename := fmt.Sprintf("tests/%s", fixture)
 		env, err := readFile(fixtureFilename)
 		if err != nil {
 			t.Errorf("Expected '%s' to read without error (%v)", fixtureFilename, err)
