@@ -515,3 +515,13 @@ func TestComments(t *testing.T) {
 
 	loadEnvAndCompareValues(t, Load, envFileName, expectedValues, noopPresets)
 }
+
+func TestActualEnvVarsAreLeftAlone(t *testing.T) {
+	os.Clearenv()
+	os.Setenv("OPTION_A", "actualenv")
+	_ = Load("fixtures/plain.env")
+
+	if os.Getenv("OPTION_A") != "actualenv" {
+		t.Error("An ENV var set earlier was overwritten")
+	}
+}
