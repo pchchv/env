@@ -2,9 +2,9 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
 
-	"github.com/labstack/echo"
 	"github.com/pchchv/env"
 )
 
@@ -24,6 +24,8 @@ func getEnvValue(v string) string {
 }
 
 func main() {
-	e := echo.New()
-	log.Fatal(e.Start(":" + getEnvValue("PORT")).Error())
+	err := http.ListenAndServe(":"+getEnvValue("PORT"), nil)
+	if err != nil {
+		log.Panic(err)
+	}
 }
